@@ -12,6 +12,7 @@ pub fn build(b: *std.Build) void {
     });
 
     //xxHashLibrary(exe, optimize);
+    exe.addIncludePath(srcPath() ++ "/vendor/squashfs-tools");
     squashFsTool(b, target, optimize);
     exe.linkLibC();
     exe.install();
@@ -130,7 +131,15 @@ pub fn squashFsTool(b: *std.Build, target: std.zig.CrossTarget, optimize: std.bu
     }
 
     exe.linkLibC();
+    exe.linkSystemLibrary("zlib");
+    exe.setOutputDir("zig-out/tools");
     exe.install();
+
+    const run_cmd = exe.run();
+    run_cmd.step.dependOn(b.getInstallStep());
+
+    const assets_step = b.step("assets", "Package the assets");
+    assets_step.dependOn(&run_cmd.step);
 }
 
 inline fn srcPath() []const u8 {
