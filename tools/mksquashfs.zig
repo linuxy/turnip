@@ -17,7 +17,12 @@ const c = @cImport({
 });
 
 pub fn main() !void {
-    const args = &[_:null]?[*:0]const u8{ "mksquashfs", "assets", "assets.squashfs", "-noappend", };
+    const args = &[_:null]?[*:0]const u8{
+        "mksquashfs",
+        "assets",
+        "zig-out/assets.squashfs",
+        "-noappend",
+    };
     const yarg = @intToPtr([*c][*c]u8, @ptrToInt(args));
-    _ = c.cmain(4,yarg);
+    _ = c.cmain(4, yarg);
 }

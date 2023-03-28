@@ -79,7 +79,9 @@ pub fn squashFsTool(b: *std.Build, target: std.zig.CrossTarget, optimize: std.bu
     exe.addIncludePath(srcPath() ++ "/vendor/squashfs-tools");
     exe.addIncludePath("/usr/include");
     exe.addIncludePath("/usr/include/x86_64-linux-gnu");
+    exe.addIncludePath("/opt/homebrew/opt/zlib/include");
     exe.addLibraryPath("/vendor/squashfs-tools");
+    exe.addLibraryPath("/opt/homebrew/opt/zlib/lib");
     exe.disable_sanitize_c = true;
 
     var c_flags = std.ArrayList([]const u8).init(b.allocator);
@@ -127,11 +129,15 @@ pub fn squashFsTool(b: *std.Build, target: std.zig.CrossTarget, optimize: std.bu
         // "/vendor/squashfs-tools/squashfs-tools/unsquashfs_xattr.c"
     }) catch @panic("error");
     for (sources.items) |src| {
-        exe.addCSourceFile(b.fmt("{s}{s}", .{srcPath(), src}), c_flags.items);
+        exe.addCSourceFile(b.fmt("{s}{s}", .{ srcPath(), src }), c_flags.items);
     }
 
     exe.linkLibC();
-    exe.linkSystemLibrary("zlib");
+    if (target.isLinux() or target.isWindows())
+        exe.linkSystemLibrary("zlib")
+    else
+        exe.linkSystemLibrary("z");
+
     exe.setOutputDir("zig-out/tools");
     exe.install();
 
