@@ -3,7 +3,7 @@
 	url = https://github.com/linuxy/libsquash.git
 [submodule "vendor/squashfs-tools"]
 	path = vendor/squashfs-tools
-	url = https://github.com/plougher/squashfs-tools.git
+	url = https://github.com/linuxy/squashfs-tools.git
 [submodule "vendor/xxHash"]
 	path = vendor/xxHash
 	url = https://github.com/Cyan4973/xxHash.git
