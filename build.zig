@@ -11,11 +11,13 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    //xxHashLibrary(exe, optimize);
+    xxHashLibrary(b, exe, target, optimize);
+
     exe.addIncludePath(srcPath() ++ "/vendor/squashfs-tools");
-    squashFsTool(b, target, optimize);
     exe.linkLibC();
     exe.install();
+
+    squashFsTool(b, target, optimize);
 
     const run_cmd = exe.run();
 
@@ -39,35 +41,34 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&exe_tests.step);
 }
 
-// pub fn xxHashLibrary(step: *std.build.CompileStep, optimize: std.builtin.OptimizeMode) void {
-//     const b = step.builder;
-//     const lib = b.addStaticLibrary(.{
-//         .name = "xxhashlib",
-//         .target = step.target,
-//         .optimize = step.optimize,
-//     });
-//     lib.addIncludePath(srcPath() ++ "/vendor/xxHash");
-//     lib.addIncludePath("/usr/include");
-//     lib.addIncludePath("/usr/include/x86_64-linux-gnu");
-//     lib.addLibraryPath("/vendor/xxHash/cmake_unofficial");
-//     lib.disable_sanitize_c = true;
+pub fn xxHashLibrary(b: *std.Build, exe: *std.Build.CompileStep, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) void {
+    const lib = b.addStaticLibrary(.{
+        .name = "xxhashlib",
+        .target = target,
+        .optimize = optimize,
+    });
+    lib.addIncludePath(srcPath() ++ "/vendor/xxHash");
+    lib.addIncludePath("/usr/include");
+    lib.addIncludePath("/usr/include/x86_64-linux-gnu");
+    lib.addLibraryPath("/vendor/xxHash/cmake_unofficial");
+    lib.disable_sanitize_c = true;
 
-//     var c_flags = std.ArrayList([]const u8).init(b.allocator);
-//     if (optimize == .ReleaseFast) c_flags.append("-Os") catch @panic("error");
-//     c_flags.append("-DXSUM_NO_MAIN") catch @panic("error");
+    var c_flags = std.ArrayList([]const u8).init(b.allocator);
+    if (optimize == .ReleaseFast) c_flags.append("-Os") catch @panic("error");
+    c_flags.append("-DXSUM_NO_MAIN") catch @panic("error");
 
-//     var sources = std.ArrayList([]const u8).init(b.allocator);
-//     sources.appendSlice(&.{
-//         "/vendor/xxHash/cli/xsum_os_specific.c",
-//         "/vendor/xxHash/cli/xsum_bench.c",
-//         "/vendor/xxHash/cli/xsum_output.c",
-//         "/vendor/xxHash/cli/xsum_sanity_check.c"
-//     }) catch @panic("error");
-//     for (sources.items) |src| {
-//         lib.addCSourceFile(b.fmt("{s}{s}", .{srcPath(), src}), c_flags.items);
-//     }
-//     step.linkLibrary(lib);
-// }
+    var sources = std.ArrayList([]const u8).init(b.allocator);
+    sources.appendSlice(&.{
+        "/vendor/xxHash/cli/xsum_os_specific.c",
+        "/vendor/xxHash/cli/xsum_bench.c",
+        "/vendor/xxHash/cli/xsum_output.c",
+        "/vendor/xxHash/cli/xsum_sanity_check.c"
+    }) catch @panic("error");
+    for (sources.items) |src| {
+        lib.addCSourceFile(b.fmt("{s}{s}", .{srcPath(), src}), c_flags.items);
+    }
+    exe.linkLibrary(lib);
+}
 
 pub fn squashFsTool(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) void {
     const exe = b.addExecutable(.{
@@ -116,17 +117,6 @@ pub fn squashFsTool(b: *std.Build, target: std.zig.CrossTarget, optimize: std.bu
         "/vendor/squashfs-tools/squashfs-tools/read_xattrs.c",
         "/vendor/squashfs-tools/squashfs-tools/tar_xattr.c",
         "/vendor/squashfs-tools/squashfs-tools/pseudo_xattr.c",
-        // "/vendor/squashfs-tools/squashfs-tools/unsquashfs.c",
-        // "/vendor/squashfs-tools/squashfs-tools/unsquash-1.c",
-        // "/vendor/squashfs-tools/squashfs-tools/unsquash-2.c",
-        // "/vendor/squashfs-tools/squashfs-tools/unsquash-3.c",
-        // "/vendor/squashfs-tools/squashfs-tools/unsquash-4.c",
-        // "/vendor/squashfs-tools/squashfs-tools/unsquash-123.c",
-        // "/vendor/squashfs-tools/squashfs-tools/unsquash-34.c",
-        // "/vendor/squashfs-tools/squashfs-tools/unsquash-1234.c",
-        // "/vendor/squashfs-tools/squashfs-tools/unsquash-12.c",
-        // "/vendor/squashfs-tools/squashfs-tools/unsquashfs_info.c",
-        // "/vendor/squashfs-tools/squashfs-tools/unsquashfs_xattr.c"
     }) catch @panic("error");
     for (sources.items) |src| {
         exe.addCSourceFile(b.fmt("{s}{s}", .{ srcPath(), src }), c_flags.items);
@@ -138,7 +128,6 @@ pub fn squashFsTool(b: *std.Build, target: std.zig.CrossTarget, optimize: std.bu
     else
         exe.linkSystemLibrary("z");
 
-    exe.setOutputDir("zig-out/tools");
     exe.install();
 
     const run_cmd = exe.run();
