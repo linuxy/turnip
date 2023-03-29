@@ -6,15 +6,17 @@ pub fn build(b: *std.Build) void {
 
     const exe = b.addExecutable(.{
         .name = "turnip",
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = .{ .path = "examples/embedded.zig" },
         .target = target,
         .optimize = optimize,
     });
 
-    xxHashLibrary(b, exe, target, optimize);
+    squashLibrary(b, exe, target, optimize);
+    // xxHashLibrary(b, exe, target, optimize);
 
     exe.addIncludePath(srcPath() ++ "/vendor/squashfs-tools");
     exe.linkLibC();
+    exe.main_pkg_path = ".";
     exe.install();
 
     squashFsTool(b, target, optimize);
@@ -32,10 +34,13 @@ pub fn build(b: *std.Build) void {
 
     // Creates a step for unit testing.
     const exe_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = .{ .path = "examples/embedded.zig" },
         .target = target,
         .optimize = optimize,
     });
+
+    exe_tests.main_pkg_path = ".";
+    squashLibrary(b, exe_tests, target, optimize);
 
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&exe_tests.step);
@@ -68,6 +73,62 @@ pub fn xxHashLibrary(b: *std.Build, exe: *std.Build.CompileStep, target: std.zig
         lib.addCSourceFile(b.fmt("{s}{s}", .{srcPath(), src}), c_flags.items);
     }
     exe.linkLibrary(lib);
+}
+
+pub fn squashLibrary(b: *std.Build, exe: *std.Build.CompileStep, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) void {
+    const lib = b.addStaticLibrary(.{
+        .name = "libsquash",
+        .target = target,
+        .optimize = optimize,
+    });
+    lib.addIncludePath(srcPath() ++ "/vendor/libsquash/include");
+    lib.addIncludePath("/usr/include");
+    lib.addIncludePath("/usr/include/x86_64-linux-gnu");
+    lib.addIncludePath("/opt/homebrew/opt/zlib/include");
+    lib.addLibraryPath("/opt/homebrew/opt/zlib/lib");
+    lib.disable_sanitize_c = true;
+
+    var c_flags = std.ArrayList([]const u8).init(b.allocator);
+    if (optimize == .ReleaseFast) c_flags.append("-Os") catch @panic("error");
+
+    var sources = std.ArrayList([]const u8).init(b.allocator);
+    sources.appendSlice(&.{
+        "/vendor/libsquash/src/cache.c",
+        "/vendor/libsquash/src/decompress.c",
+        "/vendor/libsquash/src/dir.c",
+        "/vendor/libsquash/src/dirent.c",
+        "/vendor/libsquash/src/extract.c",
+        "/vendor/libsquash/src/fd.c",
+        "/vendor/libsquash/src/file.c",
+        "/vendor/libsquash/src/fs.c",
+        "/vendor/libsquash/src/hash.c",
+        "/vendor/libsquash/src/mutex.c",
+        "/vendor/libsquash/src/nonstd-makedev.c",
+        "/vendor/libsquash/src/nonstd-stat.c",
+        "/vendor/libsquash/src/private.c",
+        "/vendor/libsquash/src/readlink.c",
+        "/vendor/libsquash/src/scandir.c",
+        "/vendor/libsquash/src/stack.c",
+        "/vendor/libsquash/src/stat.c",
+        "/vendor/libsquash/src/table.c",
+        "/vendor/libsquash/src/traverse.c",
+        "/vendor/libsquash/src/util.c",
+    }) catch @panic("error");
+    for (sources.items) |src| {
+        lib.addCSourceFile(b.fmt("{s}{s}", .{srcPath(), src}), c_flags.items);
+    }
+
+    exe.linkLibC();
+    if (target.isLinux() or target.isWindows())
+        exe.linkSystemLibrary("zlib")
+    else
+        exe.linkSystemLibrary("z");
+
+    exe.linkLibrary(lib);
+
+    exe.addAnonymousModule("libsquash", .{ 
+        .source_file = .{ .path = "./vendor/libsquash.zig" },
+    });
 }
 
 pub fn squashFsTool(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) void {
