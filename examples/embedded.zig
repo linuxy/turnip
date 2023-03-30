@@ -1,5 +1,7 @@
 const std = @import("std");
-const c = @import("libsquash");
+const c = @import("turnip").c;
+const turnip = @import("turnip").Turnip;
+
 const assert = std.debug.assert;
 
 var embedded_assets = @embedFile("../zig-out/assets.squashfs");
@@ -22,6 +24,11 @@ pub fn main() !void {
 
     var ret_c = c.squash_close(fd);
     assert(ret_c == 0);
+
+    var asset = turnip.init();
+    defer asset.deinit();
+
+    try asset.open(embedded_assets, 0);
 }
 
 test "open/close image" {

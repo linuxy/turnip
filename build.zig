@@ -1,5 +1,20 @@
 const std = @import("std");
 
+pub fn module(b: *std.Build) *std.Build.Module {
+    return b.createModule(.{
+        .source_file = .{ .path = (comptime srcPath()) ++ "/src/turnip.zig" },
+        .dependencies = &.{
+            .{ .name = "libsquash", .module = squash_module(b) }
+        },
+    });
+}
+
+pub fn squash_module(b: *std.Build) *std.Build.Module {
+    return b.createModule(.{
+        .source_file = .{ .path = (comptime srcPath()) ++ "/vendor/libsquash.zig" },
+    });
+}
+
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -10,6 +25,8 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+
+    exe.addModule("turnip", module(b));
 
     squashLibrary(b, exe, target, optimize);
     // xxHashLibrary(b, exe, target, optimize);
@@ -125,10 +142,6 @@ pub fn squashLibrary(b: *std.Build, exe: *std.Build.CompileStep, target: std.zig
         exe.linkSystemLibrary("z");
 
     exe.linkLibrary(lib);
-
-    exe.addAnonymousModule("libsquash", .{ 
-        .source_file = .{ .path = "./vendor/libsquash.zig" },
-    });
 }
 
 pub fn squashFsTool(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) void {
