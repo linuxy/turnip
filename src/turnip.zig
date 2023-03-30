@@ -24,8 +24,31 @@ pub const Turnip = struct {
         }
     }
 
-    pub fn read(self: *Turnip, buffer: []u8, buffsize: usize) anyerror!usize {
+    pub fn read(self: *Turnip, fd: i32, buffer: ?*anyopaque, buffsize: c_long) anyerror!isize {
+        var size = c.squash_read(fd, buffer, buffsize);
 
+        if(size < 0)
+            return error.FileReadError;
+
+        _ = self;
+        return size;
+    }
+
+    pub fn open(self: *Turnip, path: [*]const u8) anyerror!i32 {
+        var fd = c.squash_open(&self.fs, path);
+
+        if(fd < 0)
+            return error.FileOpenError;
+
+        return fd;
+    }
+
+    pub fn close(self: *Turnip, fd: i32) anyerror!void {
+        var ret = c.squash_close(fd);
+        _ = self;
+
+        if(ret < 0)
+            return error.FileCloseError;
     }
 
     pub fn deinit(self: *Turnip) void {
