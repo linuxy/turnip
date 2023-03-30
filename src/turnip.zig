@@ -15,7 +15,7 @@ pub const Turnip = struct {
         return image;
     }
 
-    pub fn open(self: *Turnip, data_ptr: [*]const u8, offset: usize) anyerror!void {
+    pub fn loadImage(self: *Turnip, data_ptr: [*]const u8, offset: usize) anyerror!void {
         self.data = data_ptr;
         var err = ec(c.sqfs_open_image(&self.fs, self.data, offset));
         switch(err) {
@@ -24,10 +24,14 @@ pub const Turnip = struct {
         }
     }
 
+    pub fn read(self: *Turnip, buffer: []u8, buffsize: usize) anyerror!usize {
+
+    }
+
     pub fn deinit(self: *Turnip) void {
         if(self.opened)
             c.sqfs_destroy(&self.fs);
-            
+
         self.fs = std.mem.zeroes(c.sqfs);
         self.data = undefined;
         self.opened = false;

@@ -28,7 +28,12 @@ pub fn main() !void {
     var asset = turnip.init();
     defer asset.deinit();
 
-    try asset.open(embedded_assets, 0);
+    try asset.loadImage(embedded_assets, 0);
+    var abuffer: [3]u8 = std.mem.zeroes([3]u8);
+    var fd = try asset.open("/test2");
+    assert(fd > 0);
+
+    var arsize = asset.read(fd, &buffer, 3);
 }
 
 test "open/close image" {
