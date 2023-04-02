@@ -24,8 +24,8 @@ pub const Turnip = struct {
         }
     }
 
-    pub fn read(self: *Turnip, fd: i32, buffer: ?*anyopaque, buffsize: c_long) anyerror!isize {
-        var size = c.squash_read(fd, buffer, buffsize);
+    pub fn read(self: *Turnip, fd: i32, buffer: [:0]u8, buffsize: c_long) anyerror!isize {
+        var size = c.squash_read(fd, @ptrCast(?*anyopaque, buffer), buffsize);
 
         if(size < 0)
             return error.FileReadError;
