@@ -19,26 +19,30 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const exe = b.addExecutable(.{
+    squashFsTool(b, target, optimize);
+    turnipExamples(b, target, optimize);
+}
+
+pub fn turnipExamples(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) void {
+    const example = b.addExecutable(.{
         .name = "turnip",
         .root_source_file = .{ .path = "examples/embedded.zig" },
         .target = target,
         .optimize = optimize,
     });
 
-    exe.addModule("turnip", module(b));
+    example.addModule("turnip", module(b));
 
-    squashLibrary(b, exe, target, optimize);
+    squashLibrary(b, example, target, optimize);
     // xxHashLibrary(b, exe, target, optimize);
 
-    exe.addIncludePath(srcPath() ++ "/vendor/squashfs-tools");
-    exe.linkLibC();
-    exe.main_pkg_path = ".";
-    exe.install();
+    example.addIncludePath(srcPath() ++ "/vendor/squashfs-tools");
+    example.linkLibC();
+    example.main_pkg_path = ".";
 
-    squashFsTool(b, target, optimize);
-
-    const run_cmd = exe.run();
+    example.install();
+    
+    const run_cmd = example.run();
 
     run_cmd.step.dependOn(b.getInstallStep());
 
@@ -61,6 +65,9 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&exe_tests.step);
+
+    const example_step = b.step("example", "Build the example");
+    example_step.dependOn(&run_cmd.step);
 }
 
 pub fn xxHashLibrary(b: *std.Build, exe: *std.Build.CompileStep, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) void {
