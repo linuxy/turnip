@@ -60,6 +60,7 @@ pub fn turnipExamples(b: *std.Build, target: std.zig.CrossTarget, optimize: std.
 
     exe_tests.main_pkg_path = ".";
     squashLibrary(b, exe_tests, target, optimize);
+    exe_tests.addModule("turnip", module(b));
 
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&exe_tests.step);
