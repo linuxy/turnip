@@ -3,9 +3,7 @@ const std = @import("std");
 pub fn module(b: *std.Build) *std.Build.Module {
     return b.createModule(.{
         .source_file = .{ .path = (comptime srcPath()) ++ "/src/turnip.zig" },
-        .dependencies = &.{
-            .{ .name = "libsquash", .module = squash_module(b) }
-        },
+        .dependencies = &.{.{ .name = "libsquash", .module = squash_module(b) }},
     });
 }
 
@@ -41,7 +39,7 @@ pub fn turnipExamples(b: *std.Build, target: std.zig.CrossTarget, optimize: std.
     example.main_pkg_path = ".";
 
     example.install();
-    
+
     const run_cmd = example.run();
 
     run_cmd.step.dependOn(b.getInstallStep());
@@ -87,14 +85,9 @@ pub fn xxHashLibrary(b: *std.Build, exe: *std.Build.CompileStep, target: std.zig
     c_flags.append("-DXSUM_NO_MAIN") catch @panic("error");
 
     var sources = std.ArrayList([]const u8).init(b.allocator);
-    sources.appendSlice(&.{
-        "/vendor/xxHash/cli/xsum_os_specific.c",
-        "/vendor/xxHash/cli/xsum_bench.c",
-        "/vendor/xxHash/cli/xsum_output.c",
-        "/vendor/xxHash/cli/xsum_sanity_check.c"
-    }) catch @panic("error");
+    sources.appendSlice(&.{ "/vendor/xxHash/cli/xsum_os_specific.c", "/vendor/xxHash/cli/xsum_bench.c", "/vendor/xxHash/cli/xsum_output.c", "/vendor/xxHash/cli/xsum_sanity_check.c" }) catch @panic("error");
     for (sources.items) |src| {
-        lib.addCSourceFile(b.fmt("{s}{s}", .{srcPath(), src}), c_flags.items);
+        lib.addCSourceFile(b.fmt("{s}{s}", .{ srcPath(), src }), c_flags.items);
     }
     exe.linkLibrary(lib);
 }
@@ -108,6 +101,7 @@ pub fn squashLibrary(b: *std.Build, exe: *std.Build.CompileStep, target: std.zig
     lib.addIncludePath(srcPath() ++ "/vendor/libsquash/include");
     lib.addIncludePath("/usr/include");
     lib.addIncludePath("/usr/include/x86_64-linux-gnu");
+    lib.addIncludePath("/System/Volumes/Data/Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include");
     lib.addIncludePath("/opt/homebrew/opt/zlib/include");
     lib.addLibraryPath("/opt/homebrew/opt/zlib/lib");
     lib.disable_sanitize_c = true;
@@ -139,7 +133,7 @@ pub fn squashLibrary(b: *std.Build, exe: *std.Build.CompileStep, target: std.zig
         "/vendor/libsquash/src/util.c",
     }) catch @panic("error");
     for (sources.items) |src| {
-        lib.addCSourceFile(b.fmt("{s}{s}", .{srcPath(), src}), c_flags.items);
+        lib.addCSourceFile(b.fmt("{s}{s}", .{ srcPath(), src }), c_flags.items);
     }
 
     exe.linkLibC();
