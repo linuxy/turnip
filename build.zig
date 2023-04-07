@@ -151,7 +151,7 @@ pub fn squashLibrary(b: *std.Build, exe: *std.Build.CompileStep, target: std.zig
 pub fn squashFsTool(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) void {
     const exe = b.addExecutable(.{
         .name = "mksquashfs",
-        .root_source_file = .{ .path = "tools/mksquashfs.zig" },
+        .root_source_file = .{ .path = srcPath() ++ "/tools/mksquashfs.zig" },
         .target = target,
         .optimize = optimize,
     });
