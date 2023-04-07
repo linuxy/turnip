@@ -18,7 +18,9 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     squashFsTool(b, target, optimize);
-    turnipExamples(b, target, optimize);
+
+    if(b.option(bool, "examples", "Build examples") == true)
+        turnipExamples(b, target, optimize);
 }
 
 pub fn turnipExamples(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) void {
