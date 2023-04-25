@@ -1,6 +1,9 @@
 # turnip
 An embedded virtual file system for games and other projects
 
+
+![turnip](https://user-images.githubusercontent.com/1159529/234340674-a5de2be8-f87d-4532-a64c-811bd05a4ca8.png)
+
 Builds against zig 0.11.0-dev.2477+2ee328995+
 
 ```git clone --recursive https://github.com/linuxy/turnip.git```
